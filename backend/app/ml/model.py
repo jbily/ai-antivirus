@@ -6,35 +6,21 @@ import numpy as np
 
 from app.core.config import settings
 
+# Define DummyModel at the top level so it can be found during unpickling
+class DummyModel:
+    """
+    Dummy ML model for demonstration purposes
+    """
+    def predict_proba(self, X):
+        n_samples = len(X) if hasattr(X, '__len__') else 1
+        return np.array([[random.uniform(0, 1), random.uniform(0, 1)] for _ in range(n_samples)])
+    def predict(self, X):
+        probas = self.predict_proba(X)
+        return np.argmax(probas, axis=1)
+
 # Check if model exists, if not create a dummy model
 if not os.path.exists(settings.MODEL_PATH):
-    # Create directory if it doesn't exist
     os.makedirs(os.path.dirname(settings.MODEL_PATH), exist_ok=True)
-    
-    # Create and save a dummy model
-    class DummyModel:
-        """
-        Dummy ML model for demonstration purposes
-        """
-        def predict_proba(self, X):
-            """
-            Predict probability of malicious behavior
-            Returns a 2D array of shape (n_samples, 2) where:
-            - Column 0 is the probability of being benign
-            - Column 1 is the probability of being malicious
-            """
-            # For demonstration, we'll return random probabilities
-            n_samples = len(X) if hasattr(X, '__len__') else 1
-            return np.array([[random.uniform(0, 1), random.uniform(0, 1)] for _ in range(n_samples)])
-        
-        def predict(self, X):
-            """
-            Predict class (0 for benign, 1 for malicious)
-            """
-            probas = self.predict_proba(X)
-            return np.argmax(probas, axis=1)
-    
-    # Create and save the dummy model
     dummy_model = DummyModel()
     joblib.dump(dummy_model, settings.MODEL_PATH)
     print(f"Created dummy model at {settings.MODEL_PATH}")
