@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai-antivirus-backend
+    volumes:
+      - ./backend:/app
+      - backend_data:/app/data
+    ports:
+      - "8000:8000"
+    networks:
+      - ai-antivirus-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ai-antivirus-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - ai-antivirus-network
+    restart: unless-stopped
+
+networks:
+  ai-antivirus-network:
+    driver: bridge
+
+volumes:
+  backend_data:
