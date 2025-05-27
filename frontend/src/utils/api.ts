@@ -30,6 +30,16 @@ export interface ScanResult {
   }[];
 }
 
+export interface ScanSummary {
+  id: string;
+  dataset_name: string | null;
+  ip_addresses: string;
+  status: string;
+  progress: number;
+  created_at: string;
+  updated_at: string;
+}
+
 // Create a scan
 export const createScan = async (formData: FormData): Promise<{ id: string }> => {
   try {
@@ -52,6 +62,27 @@ export const getScanResults = async (scanId: string): Promise<ScanResult> => {
     return response.data;
   } catch (error) {
     console.error('Error getting scan results:', error);
+    throw error;
+  }
+};
+
+// List all scans (new feature)
+export const listScans = async (): Promise<ScanSummary[]> => {
+  try {
+    const response = await axios.get(`${API_URL}/scans`);
+    return response.data;
+  } catch (error) {
+    console.error('Error listing scans:', error);
+    throw error;
+  }
+};
+
+// Delete a scan (if supported)
+export const deleteScan = async (scanId: string): Promise<void> => {
+  try {
+    await axios.delete(`${API_URL}/scan/${scanId}`);
+  } catch (error) {
+    console.error('Error deleting scan:', error);
     throw error;
   }
 };

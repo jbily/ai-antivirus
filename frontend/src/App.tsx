@@ -5,7 +5,7 @@ import IpAddressInput from '@/components/IpAddressInput';
 import ScanResults from '@/components/ScanResults';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { createScan, getScanResults, getPdfReportUrl, createWebSocketConnection, ScanResult } from '@/utils/api';
+import { createScan, getScanResults, getPdfReportUrl, createWebSocketConnection, ScanResult, listScans, deleteScan, ScanSummary } from '@/utils/api';
 import { Shield, Lock, Zap, Activity } from 'lucide-react';
 
 function App() {
@@ -19,6 +19,8 @@ function App() {
   const [currentScanId, setCurrentScanId] = useState<string | null>(null);
   const [scanResults, setScanResults] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [scans, setScans] = useState<ScanSummary[]>([]);
+  const [showManageScans, setShowManageScans] = useState(false);
 
   // Toggle language between English and French
   const toggleLanguage = () => {
@@ -96,12 +98,30 @@ function App() {
     }
   };
 
-  // Handle download report
-  const handleDownloadReport = () => {
-    if (currentScanId) {
-      window.open(getPdfReportUrl(currentScanId), '_blank');
+  // Fetch all scans
+  const fetchScans = async () => {
+    try {
+      const data = await listScans();
+      setScans(data);
+    } catch (err) {
+      setError('Failed to fetch scans.');
     }
   };
+
+  // Delete a scan
+  const handleDeleteScan = async (scanId: string) => {
+    try {
+      await deleteScan(scanId);
+      fetchScans();
+    } catch (err) {
+      setError('Failed to delete scan.');
+    }
+  };
+
+  // Show manage scans section
+  useEffect(() => {
+    if (showManageScans) fetchScans();
+  }, [showManageScans]);
 
   // Animation states
   const [showHero, setShowHero] = useState(false);
@@ -115,6 +135,13 @@ function App() {
     setTimeout(() => setShowFeatures(true), 600);
     setTimeout(() => setShowScanSection(true), 1100);
   }, []);
+
+  // Handle download report
+  const handleDownloadReport = () => {
+    if (currentScanId) {
+      window.open(getPdfReportUrl(currentScanId), '_blank');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -179,29 +206,27 @@ function App() {
         </div>
         
         {/* Features Section */}
-        <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 ${showFeatures ? 'animate-in fade-in-50 slide-in-from-bottom-5 duration-700' : 'opacity-0'}`}>
+        <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 ${showFeatures ? 'animate-in fade-in-50 slide-in-from-bottom-5 duration-700' : 'opacity-0'}`} id="features">
           <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
             <div className="flex items-center mb-4">
               <Shield className="h-8 w-8 text-blue-600 mr-3" />
-              <h3 className="text-xl font-semibold">Malware Detection</h3>
+              <h3 className="text-xl font-semibold">{t('common.malwareDetection') || 'Malware Detection'}</h3>
             </div>
-            <p className="text-gray-600">Advanced AI algorithms to detect and analyze potential threats in your datasets.</p>
+            <p className="text-gray-600">{t('common.malwareDetectionDesc') || 'Advanced AI algorithms to detect and analyze potential threats in your datasets.'}</p>
           </div>
-          
           <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
             <div className="flex items-center mb-4">
               <Zap className="h-8 w-8 text-yellow-500 mr-3" />
-              <h3 className="text-xl font-semibold">Network Scanning</h3>
+              <h3 className="text-xl font-semibold">{t('common.networkScanning') || 'Network Scanning'}</h3>
             </div>
-            <p className="text-gray-600">Comprehensive scanning of your network for vulnerabilities and suspicious activities.</p>
+            <p className="text-gray-600">{t('common.networkScanningDesc') || 'Comprehensive scanning of your network for vulnerabilities and suspicious activities.'}</p>
           </div>
-          
           <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
             <div className="flex items-center mb-4">
               <Activity className="h-8 w-8 text-green-500 mr-3" />
-              <h3 className="text-xl font-semibold">Real-time Updates</h3>
+              <h3 className="text-xl font-semibold">{t('common.realTimeUpdates') || 'Real-time Updates'}</h3>
             </div>
-            <p className="text-gray-600">Live progress tracking and instant notifications about detected threats.</p>
+            <p className="text-gray-600">{t('common.realTimeUpdatesDesc') || 'Live progress tracking and instant notifications about detected threats.'}</p>
           </div>
         </div>
         <div className={`bg-white shadow-lg hover:shadow-xl transition-all duration-500 rounded-lg p-6 mb-6 ${showScanSection ? 'animate-in fade-in-50 slide-in-from-bottom-5 duration-700' : 'opacity-0'}`}>
@@ -339,6 +364,46 @@ function App() {
         {/* Scan Results */}
         {scanResults && (
           <ScanResults results={scanResults} onDownloadReport={handleDownloadReport} />
+        )}
+
+        {/* Manage Scans Section */}
+        <div className="mb-6 flex justify-end">
+          <Button variant="outline" onClick={() => setShowManageScans((v) => !v)}>
+            {showManageScans ? 'Hide' : 'Manage Scans'}
+          </Button>
+        </div>
+        {showManageScans && (
+          <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">All Scans</h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2">ID</th>
+                    <th className="px-4 py-2">Status</th>
+                    <th className="px-4 py-2">Progress</th>
+                    <th className="px-4 py-2">Created</th>
+                    <th className="px-4 py-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {scans.map((scan) => (
+                    <tr key={scan.id}>
+                      <td className="px-4 py-2 text-xs">{scan.id.slice(0, 8)}...</td>
+                      <td className="px-4 py-2">{scan.status}</td>
+                      <td className="px-4 py-2">{scan.progress}%</td>
+                      <td className="px-4 py-2">{new Date(scan.created_at).toLocaleString()}</td>
+                      <td className="px-4 py-2 space-x-2">
+                        <Button size="sm" onClick={() => { setCurrentScanId(scan.id); fetchScanResults(scan.id); setShowManageScans(false); }}>View</Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleDeleteScan(scan.id)}>Delete</Button>
+                        <Button size="sm" variant="outline" onClick={() => window.open(getPdfReportUrl(scan.id), '_blank')}>PDF</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
       </main>
     </div>

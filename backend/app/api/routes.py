@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, UploadFile, File, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, UploadFile, File, WebSocket, WebSocketDisconnect, Form
 from sqlmodel import Session, select
 from typing import List, Dict, Any, Optional
 from uuid import UUID
@@ -45,7 +45,7 @@ manager = ConnectionManager()
 @router.post("/scan", response_model=ScanRead)
 async def create_scan(
     background_tasks: BackgroundTasks,
-    ip_addresses: str,
+    ip_addresses: str = Form(...),
     dataset: Optional[UploadFile] = File(None),
     session: Session = Depends(get_session)
 ):
@@ -182,3 +182,23 @@ async def websocket_endpoint(websocket: WebSocket, scan_id: str):
             await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(websocket, scan_id)
+
+@router.get("/scans", response_model=List[ScanRead])
+async def list_scans(session: Session = Depends(get_session)):
+    """
+    List all scans
+    """
+    scans = session.exec(select(Scan)).all()
+    return scans
+
+@router.delete("/scan/{scan_id}")
+async def delete_scan(scan_id: UUID, session: Session = Depends(get_session)):
+    """
+    Delete a scan by ID
+    """
+    scan = session.get(Scan, scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    session.delete(scan)
+    session.commit()
+    return {"detail": "Scan deleted"}

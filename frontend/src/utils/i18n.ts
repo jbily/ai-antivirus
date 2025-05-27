@@ -29,6 +29,13 @@ const enTranslations = {
     openPorts: 'Open Ports',
     fileName: 'File Name',
     language: 'Language',
+    // Added for features section
+    malwareDetection: 'Malware Detection',
+    malwareDetectionDesc: 'Advanced AI algorithms to detect and analyze potential threats in your datasets.',
+    networkScanning: 'Network Scanning',
+    networkScanningDesc: 'Comprehensive scanning of your network for vulnerabilities and suspicious activities.',
+    realTimeUpdates: 'Real-time Updates',
+    realTimeUpdatesDesc: 'Live progress tracking and instant notifications about detected threats.',
   },
   dropzone: {
     title: 'Drag & drop your dataset here',
@@ -81,6 +88,13 @@ const frTranslations = {
     openPorts: 'Ports ouverts',
     fileName: 'Nom du fichier',
     language: 'Langue',
+    // Added for features section
+    malwareDetection: 'Détection de logiciels malveillants',
+    malwareDetectionDesc: 'Algorithmes d\'IA avancés pour détecter et analyser les menaces potentielles dans vos ensembles de données.',
+    networkScanning: 'Analyse du réseau',
+    networkScanningDesc: 'Analyse complète de votre réseau pour détecter les vulnérabilités et les activités suspectes.',
+    realTimeUpdates: 'Mises à jour en temps réel',
+    realTimeUpdatesDesc: 'Suivi de la progression en direct et notifications instantanées des menaces détectées.',
   },
   dropzone: {
     title: 'Glissez et déposez votre ensemble de données ici',
